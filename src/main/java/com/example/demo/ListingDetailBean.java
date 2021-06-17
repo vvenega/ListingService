@@ -6,9 +6,9 @@ import java.util.List;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data
+/*@Data
 @NoArgsConstructor
-
+*/
 public class ListingDetailBean {
 	
 	String owner;

@@ -5,8 +5,8 @@ import java.util.List;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data
-@NoArgsConstructor
+/*@Data
+@NoArgsConstructor*/
 
 public class ListingBean {
 	
