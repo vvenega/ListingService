@@ -1,15 +1,13 @@
 package com.example.demo;
 
-import java.util.ArrayList;
+
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,16 +22,16 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 @RestController
 public class ListingServiceController {
 	
-	//private static final String VALID_CUSTOMER = "http://192.168.166:4200";
+
 	private static final String VALID_CUSTOMER = "*";
 	
-	private Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	@Autowired
+	RestTemplate restTemplate;
+
 	private ListingServiceProxy proxy;
 	HashMap<Integer, Integer> htPuerto=new HashMap<>();	
-	
-	@Autowired
+
 	private KafkaServiceProxy kafkaproxy;
 	
 	
@@ -44,10 +42,14 @@ public class ListingServiceController {
 	public ListingBean getListingObjectid(@PathVariable String objectid,@PathVariable String user,@PathVariable double price) {
 		
 		System.err.println("object id:"+objectid);
-	    ListingBean response = proxy.getListingObjectid(objectid);
+		
+		proxy=new ListingServiceProxy();
+		kafkaproxy=new KafkaServiceProxy();
+		
+	    ListingBean response = proxy.setRestTemplate(restTemplate).getListingObjectid(objectid);
 		System.err.println(response.getShortdescription());
 	    //pass Category
-		kafkaproxy.setEvent(objectid, price, "LISTING", 
+		kafkaproxy.setRestTemplate(restTemplate).setEvent(objectid, price, "LISTING", 
 				"-", "-", user, 
 				0, "VIEW_OBJECTID");
 		
@@ -57,11 +59,12 @@ public class ListingServiceController {
 	
 	@CrossOrigin(origins = VALID_CUSTOMER)
 	@GetMapping("/Listings/{user}/{ecommunities}/{types}")
-	//public List<ListingBean> getListings(@PathVariable String dummy) {
 	public List<ListingBean> getListings(@PathVariable String user,@PathVariable List<String> ecommunities,
 			@PathVariable List<String> types) {
 		
-		List<ListingBean> response = proxy.getListings(user,ecommunities,types);
+		proxy=new ListingServiceProxy();
+		
+		List<ListingBean> response = proxy.setRestTemplate(restTemplate).getListings(user,ecommunities,types);
 		
 		return response;
 	}
@@ -71,7 +74,9 @@ public class ListingServiceController {
 	public List<CategoryBean> getCategories(@PathVariable String user,@PathVariable List<String> ecommunities,
 			@PathVariable List<String> types) {
 		
-		List<CategoryBean> response = proxy.getCategories(user,ecommunities,types);
+		proxy=new ListingServiceProxy();
+		
+		List<CategoryBean> response = proxy.setRestTemplate(restTemplate).getCategories(user,ecommunities,types);
 		
 		return response;
 	}
@@ -81,20 +86,23 @@ public class ListingServiceController {
 	public List<CategoryBean> getUserCategories(@PathVariable String user,@PathVariable List<String> ecommunities,
 			@PathVariable List<String> types) {
 		
-		List<CategoryBean> response = proxy.getUserCategories(user,ecommunities,types);
+		proxy=new ListingServiceProxy();
+		List<CategoryBean> response = proxy.setRestTemplate(restTemplate).getUserCategories(user,ecommunities,types);
 		
 		return response;
 	}
 	
 	@CrossOrigin(origins = VALID_CUSTOMER)
 	@GetMapping("/ListingsCategory/{user}/{category}/{ecommunities}/{types}")
-	//public List<ListingBean> getListings(@PathVariable String dummy) {
 	public List<ListingBean> getListingsCategory(@PathVariable String user,@PathVariable String category,@PathVariable List<String> ecommunities,
 			@PathVariable List<String> types) {
 		
-		List<ListingBean> response = proxy.getListingsCategory(user,category,ecommunities,types);
+		proxy=new ListingServiceProxy();
+		kafkaproxy=new KafkaServiceProxy();
 		
-		kafkaproxy.setEvent("ALL", 0.0, category, 
+		List<ListingBean> response = proxy.setRestTemplate(restTemplate).getListingsCategory(user,category,ecommunities,types);
+		
+		kafkaproxy.setRestTemplate(restTemplate).setEvent("ALL", 0.0, category, 
 				"-", "-", user, 
 				0, "CATEGORY_VIEW");
 		
@@ -104,13 +112,15 @@ public class ListingServiceController {
 	
 	@CrossOrigin(origins = VALID_CUSTOMER)
 	@GetMapping("/ListingsUserCategory/{user}/{category}/{ecommunities}/{types}")
-	//public List<ListingBean> getListings(@PathVariable String dummy) {
 	public List<ListingBean> getListingsUserCategory(@PathVariable String user,@PathVariable String category,@PathVariable List<String> ecommunities,
 			@PathVariable List<String> types) {
 		
-		List<ListingBean> response = proxy.getListingsUserCategory(user,category,ecommunities,types);
+		proxy=new ListingServiceProxy();
+		kafkaproxy=new KafkaServiceProxy();
 		
-		kafkaproxy.setEvent("ALL", 0.0, category, 
+		List<ListingBean> response = proxy.setRestTemplate(restTemplate).getListingsUserCategory(user,category,ecommunities,types);
+		
+		kafkaproxy.setRestTemplate(restTemplate).setEvent("ALL", 0.0, category, 
 				"-", "-", user, 
 				0, "CATEGORY_VIEW_OWN");
 		
@@ -120,12 +130,14 @@ public class ListingServiceController {
 	
 	@CrossOrigin(origins = VALID_CUSTOMER)
 	@GetMapping("/ListingsPrice/{user}/{price}")
-	//public List<ListingBean> getListings(@PathVariable String dummy) {
 	public List<ListingBean> getListingsPrice(@PathVariable String user,@PathVariable double price) {
 		
-		List<ListingBean> response = proxy.getListingsPrice(user,price);
+		proxy=new ListingServiceProxy();
+		kafkaproxy=new KafkaServiceProxy();
 		
-		kafkaproxy.setEvent("ALL", price, "-", 
+		List<ListingBean> response = proxy.setRestTemplate(restTemplate).getListingsPrice(user,price);
+		
+		kafkaproxy.setRestTemplate(restTemplate).setEvent("ALL", price, "-", 
 				"-", "-", user, 
 				0, "PRICE_VIEW");
 		
@@ -140,7 +152,10 @@ public class ListingServiceController {
 		System.out.println("user:"+user);
 		System.out.println("objectid:"+objectid);
 		
-		ListingDetailBean response = proxy.getListingDetail(user, objectid);
+		proxy=new ListingServiceProxy();
+		kafkaproxy=new KafkaServiceProxy();
+		
+		ListingDetailBean response = proxy.setRestTemplate(restTemplate).getListingDetail(user, objectid);
 		response.setUser(user);
 		Iterator<String> itrCategory = response.getCategory().iterator();
 		while(itrCategory.hasNext()) {
@@ -150,7 +165,7 @@ public class ListingServiceController {
 			String name = response.getName().replace("/", "-");
 			name = name.replace("\\", "-");
 			
-			kafkaproxy.setEvent(response.getOwner(), response.getSaleprice(), category, 
+			kafkaproxy.setRestTemplate(restTemplate).setEvent(response.getOwner(), response.getSaleprice(), category, 
 					type, name, response.getUser(), 
 					response.getObjectid(), "VIEW");
 
@@ -165,10 +180,12 @@ public class ListingServiceController {
 	public ListingUserFeedCategoryBean getListingFeedUser(@PathVariable String user,@PathVariable List<String> ecommunities,
 			@PathVariable List<String> types) {
 		
+		proxy=new ListingServiceProxy();
+		
 		System.out.println("*****************************************");
 		System.out.println("user:"+user);
 		
-		ListingUserFeedCategoryBean response = proxy.getListingUserCategoryFeedDao(user,ecommunities,types);
+		ListingUserFeedCategoryBean response = proxy.setRestTemplate(restTemplate).getListingUserCategoryFeedDao(user,ecommunities,types);
 		response.setUser(user);
 
 		return response;
@@ -182,12 +199,15 @@ public class ListingServiceController {
 			@PathVariable String objectid,@PathVariable String type,@PathVariable List<String> category,@PathVariable boolean view,
 			@PathVariable boolean contact,@PathVariable String nameowner) {
 		
-		proxy.setContact(owner, requester, namerequester, email, message, mobile, product, price, objectid,nameowner);
+		proxy=new ListingServiceProxy();
+		kafkaproxy=new KafkaServiceProxy();
+		
+		proxy.setRestTemplate(restTemplate).setContact(owner, requester, namerequester, email, message, mobile, product, price, objectid,nameowner);
 		
 		Iterator<String> itrCat = category.iterator();
 		while(itrCat.hasNext()) {
 			String catValue = itrCat.next();
-		kafkaproxy.setEvent(owner, price, catValue, 
+		kafkaproxy.setRestTemplate(restTemplate).setEvent(owner, price, catValue, 
 				type, product, requester, 
 				Long.parseLong(objectid), "SEND",view,contact);
 		}
@@ -203,19 +223,21 @@ public class ListingServiceController {
 		
 		System.err.println("Shared post...");
 		
-		boolean response = proxy.sharePost(username, objectid);
+		proxy=new ListingServiceProxy();
+		kafkaproxy=new KafkaServiceProxy();
+		
+		boolean response = proxy.setRestTemplate(restTemplate).sharePost(username, objectid);
 		
 	    category = category.replace("/", "-");
 		type = type.replace("/", "-");
 		name = name.replace("/", "-");
 		name = name.replace("\\", "-");
 		
-		kafkaproxy.setEvent(owner, saleprice, category, 
+		kafkaproxy.setRestTemplate(restTemplate).setEvent(owner, saleprice, category, 
 				type, name, username, 
 				Long.parseLong(objectid), "SHARED");
 		return response;
 	}
-	
 	
 	
 	
